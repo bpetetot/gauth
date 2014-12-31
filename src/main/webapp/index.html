@@ -1,0 +1,285 @@
+<html>
+
+<head>
+
+    <title>GAuth</title>
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
+</head>
+
+<body>
+
+<span id="signin-calloutarea" class="msg"></span>
+<span id="signin-container" height="45px" width="300px">&nbsp;
+    <span
+          class="g-signin"
+          data-accesstype="offline"
+          data-callback="onSignInCallback"
+          data-clientid="165531838591-ue3p80mgjk1nh0kiggg1402pamet2h85.apps.googleusercontent.com"
+          data-cookiepolicy="single_host_origin"
+          data-requestvisibleactions="http://schemas.google.com/AddActivity http://schemas.google.com/ReviewActivity"
+          data-scope="https://www.googleapis.com/auth/plus.login">
+    </span>
+</span>
+<span id="auth-area-container" style="display:none;">
+    <span class="profile-container" id="user-profile-container">
+        <!-- insert profile HTML here -->
+    </span>
+</span>
+
+<!-- Async load plus.js and client.js -->
+<script>
+
+    var idToken = undefined;
+    var accessToken = undefined;
+    var currUser = undefined;
+    var hasAuth = false;
+    var reAuth = false;
+
+    var COOKIE_KEY = 'HaikuSessionId';
+
+    (function() {
+        window.___gcfg = {
+            // place optional configuration here
+        };
+
+        var po = document.createElement('script'); po.type = 'text/javascript'; po.async = true;
+        po.src = 'https://apis.google.com/js/auth:plusone.js?onload=onPlusOneLoaded';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+    })();
+
+    /**
+     *  when the client has been loaded and gapi is defined.
+     */
+    function onPlusOneLoaded(){
+        // do stuff
+    }
+
+    /**
+     * Handles the response from the Google+ Sign-In button.
+     *
+     * @param {Object} resp The response containing information about the
+     *    state of the user.
+     */
+    function onSignInCallback(resp){
+        $('#signin-container').hide();
+
+        // haikuPlus.Controller.onSignInCallback(resp);
+        if (resp.error === undefined) {
+            console.log("Sending authorization code");
+            // Only send the authorization code if the user has been presented with
+            // the authorization prompt because the code can be exchanged for a refresh
+            // token if and only if the user has been prompted.
+            initModel(resp, true);
+            hasAuth = true;
+            this.signInUser();
+        } else {
+            // Error, any resolutions for the callback can go here and update the client.
+            hasAuth = false;
+            hideAuthUI();
+        }
+    }
+
+    function signInUser() {
+        var callback = function(user, status) {
+            showAuthUI();
+            updateUserHtml(user);
+            currUser = user;
+        };
+        getCurrentUser(callback);
+    };
+
+    function getCurrentUser(callback) {
+        if (currUser != undefined) {
+            callback(JSON.stringify(this.currUser));
+        } else {
+            // Update current user
+            this.apiCall('/api/users', 'GET', callback, '/me', '', 1);
+        }
+    };
+
+    function updateUserHtml(user) {
+        if (user === undefined) {
+            getCurrentUser(updateUserHtml);
+        }
+        $('#user-profile-container').html(getUserHtml(user));
+    };
+
+    function initModel(authResult, sendCodeToServer) {
+        if (authResult === undefined) {
+            this.idToken = undefined;
+            this.accessToken = undefined;
+            this.currUser = undefined;
+        } else {
+            this.idToken = authResult.id_token;
+            this.accessToken = authResult.access_token;
+            if (sendCodeToServer){
+                // Force the client to hit an authorized endpoint on the server.
+                var uri = '/api/users/me';
+                $.ajax(uri, {
+                    async: true,
+                    data: '',
+                    beforeSend: function(request) {
+                        request.setRequestHeader('X-OAuth-Code', authResult.code + ' redirect_uri=\'postmessage\'');
+                    },
+                    error: function(jqhr, status, error) {
+                        console.log("Error on authorize" + error);
+                    },
+                    success: function() {
+                        reAuth = false;
+                    },
+                    type: "GET"
+                });
+            }
+        }
+    };
+
+    function showAuthUI() {
+        $('#signin-container').hide();
+        $('#auth-area-container').show();
+    };
+
+
+    function hideAuthUI() {
+        $('#signin-container').show();
+        $('#auth-area-container').hide();
+        $('#user-profile-container').html('');
+    };
+
+    function hasSessionCookie() {
+        var currSessionId = this.getCurrentSessionId();
+        return currSessionId !== undefined;
+    };
+
+    function getCurrentSessionId() {
+        var keyValPairs = document.cookie.split(';');
+        for (var i=0; i < keyValPairs.length; i++){
+            var key = keyValPairs[i].split('=')[0];
+            if (key != undefined) key = key.trim();
+
+            var value = keyValPairs[i].split('=')[1];
+            if (value != undefined) value = value.trim();
+
+            if (key == 'HaikuSessionId') {
+                var vvalue = value;
+                return value;
+            }
+        }
+        return undefined;
+    };
+
+    function apiCall (endpoint, verb, callback, paramString, data, retryCount) {
+
+        if (endpoint == undefined) endpoint = '';
+        if (paramString == undefined) paramString = '';
+        if (verb == undefined) verb = 'GET';
+        if (data == undefined) data = '';
+        if (callback == undefined) {
+            callback = function(resp) {
+                console.log(resp);
+            };
+        }
+
+        retryCount++;
+
+        if (retryCount > 3) {
+            // User should not be signed in.
+            console.log('Retries reached:');
+            console.log('Calls to gapi.auth.authorize are not not ' +
+            'getting valid tokens from gapi; or, the server has ' +
+            'credentials that do not match the client.');
+            return;
+        }
+
+        var uri = encodeURI(endpoint + paramString);
+        $.ajax(uri,
+                {
+                    async: true,
+                    beforeSend: function(request) {
+                        // Only send the authorization headers if the client is not connected.
+                        if (hasSessionCookie() && !reAuth) {
+                            // Session is authorized, no need to send a bearer token.
+                        } else {
+                            reAuth = false;
+                            request.setRequestHeader('Authorization', 'Bearer ' + idToken);
+                        }
+                    },
+                    data: data,
+                    error: function(jqhr, status, error){
+                       console.log('Error : ' + error);
+                    },
+                    type: verb,
+                    success: callback
+                });
+    };
+
+    function getUserHtml(user) {
+        console.log(JSON.stringify(user));
+        var profile =
+                '<span id="profileDetails">' +
+                'Welcome back<br/>' +
+                user.display_name +
+                '!</span>'+
+                '<span id="' + user.google_id + '">' +
+                '    <img src="' + user.photo_url + '">' +
+                '</span>' +
+                '<span id="auth-buttons-area">' +
+                '  <a href="#" onClick="signOutUser()">' +
+                '    Sign out' +
+                '  </a><br>' +
+                '  <a href="#" onClick="disconnectUser()">' +
+                '    Disconnect' +
+                '  </a>' +
+                '</span>';
+        return profile;
+    };
+
+   function signOutUser() {
+        var callback = function () {
+            gapi.auth.signOut();
+            document.cookie = COOKIE_KEY + "; expires=Thu, 01 Jan 1970 00:00:01;";
+            // TODO haikuPlus.Helper.redirect(undefined, '/haikus')
+        };
+        this.apiCall('/api/signout', 'POST', callback, '', 1);
+        hideAuthUI();
+    };
+
+    /**
+     * POSTs to the server to disconnect the user from this application.
+     */
+    function disconnectUser() {
+        var callback = function (resp) {
+            // haikuPlus.Helper.refresh(undefined);
+        };
+        disconnect(callback);
+        hideAuthUI();
+    };
+
+    function disconnect (callback) {
+        // HARDCODE to disconnect directly for now.
+        if (true) {
+            // Disconnect client side
+            var disconnectURI = 'https://accounts.google.com/o/oauth2/revoke?token=' + gapi.auth.getToken().access_token;
+            // Revoke the access token.
+            $.ajax(disconnectURI, {
+                        async: true,
+                        type: 'GET',
+                        success: function(result) {
+                            // User has diconnected successfully.
+                            //haikuPlus.Helper.refresh(undefined);
+                        },
+                        error: function(e) {
+                            console.log(e);
+                        }
+                    });
+        } else {
+            // disconnect server sode
+            apiCall('/api/disconnect', 'POST', callback, '', '', 1);
+        }
+    };
+
+
+</script>
+
+</body>
+
+</html>
