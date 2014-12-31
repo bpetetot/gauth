@@ -19,6 +19,7 @@ package fr.mhz.bookie.auth;
 import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
 import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpResponseException;
+import com.google.inject.Singleton;
 import fr.mhz.bookie.services.Services;
 import fr.mhz.bookie.model.User;
 
@@ -36,6 +37,7 @@ import java.util.logging.Logger;
  *
  * @author joannasmith@google.com (Joanna Smith)
  */
+@Singleton
 public class DisconnectServlet extends HttpServlet {
   /**
    * Logger for the Authenticate class.

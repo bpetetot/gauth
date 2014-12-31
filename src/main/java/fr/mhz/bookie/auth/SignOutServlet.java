@@ -16,6 +16,7 @@
 
 package fr.mhz.bookie.auth;
 
+import com.google.inject.Singleton;
 import fr.mhz.bookie.model.User;
 import fr.mhz.bookie.services.Services;
 
@@ -33,6 +34,7 @@ import java.util.logging.Logger;
  *
  * @author joannasmith@google.com (Joanna Smith)
  */
+@Singleton
 public class SignOutServlet extends HttpServlet {
   /**
    * Logger for the Authenticate class.

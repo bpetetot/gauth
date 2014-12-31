@@ -16,6 +16,7 @@
 
 package fr.mhz.bookie.api;
 
+import com.google.inject.Singleton;
 import fr.mhz.bookie.model.User;
 import fr.mhz.bookie.services.Services;
 
@@ -31,6 +32,7 @@ import java.util.logging.Logger;
  * <p/>
  * GET /api/users/me
  */
+@Singleton
 public class UserServlet extends HttpServlet {
 
     /**

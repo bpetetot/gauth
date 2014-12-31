@@ -16,6 +16,8 @@
 
 package fr.mhz.bookie;
 
+import com.google.inject.Singleton;
+
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -27,6 +29,7 @@ import java.util.logging.Logger;
 /**
  * Simple servlet that sets the metadata.
  */
+@Singleton
 public class StaticServlet extends HttpServlet {
 
   /**

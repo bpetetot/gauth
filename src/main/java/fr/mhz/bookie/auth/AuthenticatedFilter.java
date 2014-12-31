@@ -16,6 +16,7 @@
 
 package fr.mhz.bookie.auth;
 
+import com.google.inject.Singleton;
 import fr.mhz.bookie.model.User;
 
 import javax.servlet.*;
@@ -30,6 +31,7 @@ import java.util.concurrent.Executors;
  *
  * @author joannasmith@google.com (Joanna Smith)
  */
+@Singleton
 public class AuthenticatedFilter implements Filter {
 
     Authenticate authenticator;
