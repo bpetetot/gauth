@@ -47,6 +47,12 @@ public class User extends Jsonifiable {
     public String photoUrl;
 
     /**
+     * Email for this User.
+     */
+    @Expose
+    public String email;
+
+    /**
      * Access token for authentication
      */
     public String accessToken;
@@ -127,7 +133,8 @@ public class User extends Jsonifiable {
     }
 
     public void setRefreshToken(String refreshToken) {
-        this.refreshToken = refreshToken;
+        if (refreshToken != null)
+            this.refreshToken = refreshToken;
     }
 
     public String getAccessToken() {
@@ -144,6 +151,14 @@ public class User extends Jsonifiable {
 
     public void setSessionId(String sessionId) {
         this.sessionId = sessionId;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
     }
 
     @Override

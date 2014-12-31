@@ -66,8 +66,7 @@ public class AuthenticatedFilter implements Filter {
      */
     @Override
     public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain chain) {
-        // We propagate ClassCastExceptions here, since this Filter should only ever be used with
-        // HttpServlets.
+        // We propagate ClassCastExceptions here, since this Filter should only ever be used with HttpServlets.
         HttpServletRequest request = (HttpServletRequest) servletRequest;
         HttpServletResponse response = (HttpServletResponse) servletResponse;
         String sessionId = request.getSession().getId();

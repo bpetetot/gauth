@@ -1,7 +1,6 @@
 <html>
 
 <head>
-
     <title>GAuth</title>
     <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
 </head>
@@ -16,8 +15,7 @@
           data-callback="onSignInCallback"
           data-clientid="165531838591-ue3p80mgjk1nh0kiggg1402pamet2h85.apps.googleusercontent.com"
           data-cookiepolicy="single_host_origin"
-          data-requestvisibleactions="http://schemas.google.com/AddActivity http://schemas.google.com/ReviewActivity"
-          data-scope="https://www.googleapis.com/auth/plus.login">
+          data-scope="https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/drive">
     </span>
 </span>
 <span id="auth-area-container" style="display:none;">
@@ -63,13 +61,16 @@
     function onSignInCallback(resp){
         $('#signin-container').hide();
 
-        // haikuPlus.Controller.onSignInCallback(resp);
         if (resp.error === undefined) {
             console.log("Sending authorization code");
             // Only send the authorization code if the user has been presented with
             // the authorization prompt because the code can be exchanged for a refresh
             // token if and only if the user has been prompted.
-            initModel(resp, true);
+            if (resp.status.method == "PROMPT") {
+                initModel(resp, true);
+            } else {
+                initModel(resp);
+            }
             hasAuth = true;
             this.signInUser();
         } else {
@@ -216,20 +217,20 @@
         console.log(JSON.stringify(user));
         var profile =
                 '<span id="profileDetails">' +
-                'Welcome back<br/>' +
+                'Welcome back <b>' +
                 user.display_name +
-                '!</span>'+
-                '<span id="' + user.google_id + '">' +
+                '</b><br/><br/></span>'+
+                '<div id="' + user.google_id + '">' +
                 '    <img src="' + user.photo_url + '">' +
-                '</span>' +
-                '<span id="auth-buttons-area">' +
+                '</div><br/>' +
+                '<div id="auth-buttons-area">' +
                 '  <a href="#" onClick="signOutUser()">' +
                 '    Sign out' +
                 '  </a><br>' +
                 '  <a href="#" onClick="disconnectUser()">' +
                 '    Disconnect' +
                 '  </a>' +
-                '</span>';
+                '</div>';
         return profile;
     };
 

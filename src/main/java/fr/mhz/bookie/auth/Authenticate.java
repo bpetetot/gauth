@@ -1,18 +1,3 @@
-/*
- * Copyright 2014 Google Inc. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 
 package fr.mhz.bookie.auth;
 
@@ -49,11 +34,6 @@ import java.util.regex.Pattern;
 public class Authenticate {
 
     /**
-     * Special keyword for making Google API calls on behalf of the authenticated user.
-     */
-    private static final String ME = "me";
-
-    /**
      * This is the default redirect URI for web applications and tells the browser to return
      * to the parent of the dialog. This value is used to validate a redirect URI provided in
      * the X-Oauth-Code header. It is important to validate all supplied redirect URIs, as
@@ -87,8 +67,7 @@ public class Authenticate {
     /**
      * Regular expression for identifying an authorization code header.
      */
-    private static final Pattern CODE_REGEX =
-            Pattern.compile("\\s*(\\S+)(?:\\s+redirect_uri='(.+)')?");
+    private static final Pattern CODE_REGEX = Pattern.compile("\\s*(\\S+)(?:\\s+redirect_uri='(.+)')?");
 
     /**
      * Name of the Bearer authorization header.
@@ -98,15 +77,13 @@ public class Authenticate {
     /**
      * Regular expression for identifying an authorization ID token header.
      */
-    private static final Pattern BEARER_REGEX =
-            Pattern.compile("\\s*" + BEARER_SCHEME + "\\s+(\\S+)");
+    private static final Pattern BEARER_REGEX = Pattern.compile("\\s*" + BEARER_SCHEME + "\\s+(\\S+)");
 
     /**
      * For use in verifying access tokens, as the client library currently does not provide
      * a validation method for access tokens.
      */
-    private static final String TOKEN_INFO_ENDPOINT =
-            "https://www.googleapis.com/oauth2/v1/tokeninfo?access_token=%s";
+    private static final String TOKEN_INFO_ENDPOINT = "https://www.googleapis.com/oauth2/v1/tokeninfo?access_token=%s";
 
     /**
      * Regular expression for identifying client IDs from the same API Console project.
@@ -121,8 +98,7 @@ public class Authenticate {
     /**
      * For use in building authentication response headers.
      */
-    private static final String GOOGLE_REALM =
-            "realm=\"https://www.google.com/accounts/AuthSubRequest\"";
+    private static final String GOOGLE_REALM = "realm=\"https://www.google.com/accounts/AuthSubRequest\"";
 
     /**
      * Verifier object for use in validating ID tokens.
@@ -140,9 +116,7 @@ public class Authenticate {
     Logger logger = Logger.getLogger("Authenticate");
 
     Authenticate(ExecutorService executor) {
-        this(new GoogleIdTokenVerifier(Services.TRANSPORT, Services.JSON_FACTORY),
-                new GoogleIdTokenRepository(),
-                executor);
+        this(new GoogleIdTokenVerifier(Services.TRANSPORT, Services.JSON_FACTORY), new GoogleIdTokenRepository(), executor);
     }
 
     Authenticate(GoogleIdTokenVerifier verifier, GoogleIdTokenRepository repo, ExecutorService executor) {
@@ -158,14 +132,13 @@ public class Authenticate {
      * chain.doFilter() to invoke the associated servlet and complete the API call made by
      * the client.
      *
-     * @return the User object indicating the authenticated and authorized Haiku+ user, or null
+     * @return the User object indicating the authenticated and authorized user, or null
      * to indicate that additional authentication information is needed.
      */
     User requireAuthentication(String sessionId, HttpServletRequest request, HttpServletResponse response) {
 
         User user = null;
         String googleUserId = null;
-        GoogleCredential credential;
 
         // Isolate the authorization piece of the relevant headers, if they exist.
         String codeAuth = parseAuthorizationHeader(request, CODE_AUTHORIZATION_HEADER_NAME, CODE_REGEX, 1);
@@ -185,16 +158,8 @@ public class Authenticate {
             GoogleTokenResponse tokenResponse = exchangeAuthorizationCode(codeAuth, redirectUri, response);
 
             if (tokenResponse != null) {
-                credential = Services.createCredential(tokenResponse.getAccessToken(), tokenResponse.getRefreshToken());
 
                 // An ID Token is a cryptographically-signed JSON object encoded in base 64.
-                // Normally, it is critical that you validate an ID Token before you use it,
-                // but since you are communicating directly with Google over an
-                // intermediary-free HTTPS channel and using your Client Secret to
-                // authenticate yourself to Google, you can be confident that the token you
-                // receive really comes from Google and is valid. If your server passes the
-                // ID Token to other components of your app, it is extremely important that
-                // the other components validate the token before using it.
                 googleUserId = parseIdToken(tokenResponse, response);
 
                 if (googleUserId != null) {
@@ -206,7 +171,6 @@ public class Authenticate {
                     }
                     user.setAccessToken(tokenResponse.getAccessToken());
                     user.setRefreshToken(tokenResponse.getRefreshToken());
-                    Services.userDao.updateUser(user);
                 }
             }
         }
@@ -217,9 +181,6 @@ public class Authenticate {
             // requests from iOS devices, which currently cannot use authorization codes.
             // If the verification succeeds, googleUserId will be assigned the Google ID of the
             // authenticated user.
-            // If more than one authentication header is provided, and this verification fails, the
-            // authorization credentials will be stored above, but googleUserId will be reset to null
-            // to indicate that the currently signed in user is not authenticated.
             googleUserId = verifyBearerToken(idAuth, response);
         }
 
@@ -236,7 +197,7 @@ public class Authenticate {
 
         if (user == null) {
             // If the authentication or authorization step failed, then we were unable to retrieve
-            // the associated Haiku+ user, so we check to see if there is a user associated with the
+            // the associated user, so we check to see if there is a user associated with the
             // current session and attempt to service the request, based off of stored user credentials.
             User sessionUser = Services.userDao.loadUserWithSessionId(sessionId);
             if (sessionUser == null) {
@@ -244,9 +205,6 @@ public class Authenticate {
                 // to find the corresponding user in our database) and the request did not supply
                 // an authorization header, so we return a request to authenticate with a bearer
                 // token.
-
-                // IETF RFC6750 defines how we should indicate that the user agent needs to
-                // authenticate with a bearer token.
                 logger.log(Level.INFO, "The session does not have an authenticated user, so return a 401 and request a bearer token.");
                 response.addHeader(WWW_AUTHENTICATE, BEARER_SCHEME + " " + GOOGLE_REALM);
                 response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
@@ -359,8 +317,7 @@ public class Authenticate {
             // along to be parsed as an access token.
             idToken = tokenRepo.parse(Services.JSON_FACTORY, authorization);
         } catch (IllegalArgumentException e) {
-            logger.log(Level.INFO,
-                    "Failed to verify bearer token as ID token; attempting to verify as access token");
+            logger.log(Level.INFO, "Failed to verify bearer token as ID token; attempting to verify as access token");
             return verifyAccessToken(authorization, response);
         } catch (IOException e) {
             logger.log(Level.INFO, "Failed to parse ID token; return 400", e);
@@ -370,8 +327,7 @@ public class Authenticate {
 
         try {
             // Verify the ID token before retrieving the Google ID of the user associated with the token
-            if (idTokenVerifier.verify(idToken)
-                    && tokenRepo.verifyAudience(idToken, Collections.singletonList(Services.getClientId()))) {
+            if (idTokenVerifier.verify(idToken) && tokenRepo.verifyAudience(idToken, Collections.singletonList(Services.getClientId()))) {
                 googlePlusId = getGoogleIdFromIdToken(idToken);
                 return googlePlusId;
             } else {
@@ -538,8 +494,9 @@ public class Authenticate {
 
         GoogleCredential credential = Services.createCredential(user.getAccessToken(), user.getRefreshToken());
 
-        Plus service = createPlusApiClient(credential);
-        Person person = service.people().get(ME).execute();
+        // Create google plus service to access user data
+        Plus service = new Plus.Builder(Services.TRANSPORT, Services.JSON_FACTORY, credential).build();
+        Person person = service.people().get("me").execute();
 
         // A Person resource contains many things, but in this sample, we chose to focus on the
         // Google ID, the display name, and the URLs of the user's profile and profile photo.
@@ -547,6 +504,7 @@ public class Authenticate {
         user.setDisplayName(person.getDisplayName());
         user.setPhotoUrl(person.getImage().getUrl());
         user.setLastUpdated();
+        user.setEmail(person.getEmails().get(0).getValue());
 
     }
 
@@ -577,22 +535,13 @@ public class Authenticate {
      * @param authorization the authorization code to be exchanged for a bearer token once verified
      * @param redirectUri   the redirect URI to be used for token exchange, from the APIs console.
      */
-    GoogleAuthorizationCodeTokenRequest createTokenExchanger(String authorization,
-                                                             String redirectUri) {
+    GoogleAuthorizationCodeTokenRequest createTokenExchanger(String authorization, String redirectUri) {
         return new GoogleAuthorizationCodeTokenRequest(Services.TRANSPORT,
                 Services.JSON_FACTORY,
                 Services.getClientId(),
                 Services.getClientSecret(),
                 authorization,
                 redirectUri);
-    }
-
-    /**
-     * Creates a new authorized Google+ API client that can make calls to the Google+ API on behalf
-     * of the application through the Java client library.
-     */
-    Plus createPlusApiClient(GoogleCredential credential) {
-        return new Plus.Builder(Services.TRANSPORT, Services.JSON_FACTORY, credential).build();
     }
 
     /**

@@ -30,12 +30,11 @@ import java.util.logging.Logger;
  * Provides an API endpoint for retrieving the profile of the currently logged in user.
  * <p/>
  * GET /api/users/me
- *
- * @author joannasmith@google.com (Joanna Smith)
  */
 public class UserServlet extends HttpServlet {
+
     /**
-     * Logger for the Authenticate class.
+     * Logger for the UserServlet class.
      */
     Logger logger = Logger.getLogger("UserServlet");
 
@@ -60,8 +59,6 @@ public class UserServlet extends HttpServlet {
 
         String sessionId = request.getSession().getId();
 
-        System.out.println("UserServlet> " + sessionId);
-
         User sessionUser = Services.userDao.loadUserWithSessionId(sessionId);
         if (sessionUser == null) {
             logger.log(Level.INFO, "The session is unauthenticated; return 403", sessionId);
@@ -73,9 +70,6 @@ public class UserServlet extends HttpServlet {
 
         response.setContentType(Services.JSON_MIMETYPE);
         response.setStatus(HttpServletResponse.SC_OK);
-
-        System.out.println("User> " + sessionUser.toJson());
-
         response.getWriter().print(sessionUser.toJson());
     }
 }
