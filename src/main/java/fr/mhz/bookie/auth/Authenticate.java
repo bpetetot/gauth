@@ -1,4 +1,3 @@
-
 package fr.mhz.bookie.auth;
 
 import com.google.api.client.auth.oauth2.*;
@@ -170,7 +169,10 @@ public class Authenticate {
                         user.setGoogleUserId(googleUserId);
                     }
                     user.setAccessToken(tokenResponse.getAccessToken());
-                    user.setRefreshToken(tokenResponse.getRefreshToken());
+                    if (tokenResponse.getRefreshToken() != null) {
+                        user.setRefreshToken(tokenResponse.getRefreshToken());
+                    }
+                    Services.userDao.updateUser(user);
                 }
             }
         }

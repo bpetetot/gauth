@@ -3,7 +3,7 @@ package fr.mhz.bookie.dao;
 import com.googlecode.objectify.Key;
 import fr.mhz.bookie.model.User;
 
-import static fr.mhz.bookie.dao.OfyService.ofy;
+import static fr.mhz.bookie.OfyService.ofy;
 
 public class UserDAO {
 
@@ -18,6 +18,7 @@ public class UserDAO {
      * @returns the user ID of the updated user.
      */
     public Long updateUser(User user) {
+        System.out.println("Update user");
         Key<User> result = ofy().save().entity(user).now();
         user.setUserId(result.getId());
         return user.getUserId();

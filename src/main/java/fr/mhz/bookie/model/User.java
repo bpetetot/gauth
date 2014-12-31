@@ -133,8 +133,7 @@ public class User extends Jsonifiable {
     }
 
     public void setRefreshToken(String refreshToken) {
-        if (refreshToken != null)
-            this.refreshToken = refreshToken;
+        this.refreshToken = refreshToken;
     }
 
     public String getAccessToken() {

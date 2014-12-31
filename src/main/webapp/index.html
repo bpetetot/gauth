@@ -10,12 +10,12 @@
 <span id="signin-calloutarea" class="msg"></span>
 <span id="signin-container" height="45px" width="300px">&nbsp;
     <span
-          class="g-signin"
-          data-accesstype="offline"
-          data-callback="onSignInCallback"
-          data-clientid="165531838591-ue3p80mgjk1nh0kiggg1402pamet2h85.apps.googleusercontent.com"
-          data-cookiepolicy="single_host_origin"
-          data-scope="https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/drive">
+            class="g-signin"
+            data-accesstype="offline"
+            data-callback="onSignInCallback"
+            data-clientid="165531838591-ue3p80mgjk1nh0kiggg1402pamet2h85.apps.googleusercontent.com"
+            data-cookiepolicy="single_host_origin"
+            data-scope="https://www.googleapis.com/auth/plus.login https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/drive">
     </span>
 </span>
 <span id="auth-area-container" style="display:none;">
@@ -35,20 +35,23 @@
 
     var COOKIE_KEY = 'HaikuSessionId';
 
-    (function() {
+    (function () {
         window.___gcfg = {
             // place optional configuration here
         };
 
-        var po = document.createElement('script'); po.type = 'text/javascript'; po.async = true;
+        var po = document.createElement('script');
+        po.type = 'text/javascript';
+        po.async = true;
         po.src = 'https://apis.google.com/js/auth:plusone.js?onload=onPlusOneLoaded';
-        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+        var s = document.getElementsByTagName('script')[0];
+        s.parentNode.insertBefore(po, s);
     })();
 
     /**
      *  when the client has been loaded and gapi is defined.
      */
-    function onPlusOneLoaded(){
+    function onPlusOneLoaded() {
         // do stuff
     }
 
@@ -58,7 +61,7 @@
      * @param {Object} resp The response containing information about the
      *    state of the user.
      */
-    function onSignInCallback(resp){
+    function onSignInCallback(resp) {
         $('#signin-container').hide();
 
         if (resp.error === undefined) {
@@ -81,13 +84,14 @@
     }
 
     function signInUser() {
-        var callback = function(user, status) {
+        var callback = function (user, status) {
             showAuthUI();
             updateUserHtml(user);
             currUser = user;
         };
         getCurrentUser(callback);
-    };
+    }
+    ;
 
     function getCurrentUser(callback) {
         if (currUser != undefined) {
@@ -96,14 +100,16 @@
             // Update current user
             this.apiCall('/api/users', 'GET', callback, '/me', '', 1);
         }
-    };
+    }
+    ;
 
     function updateUserHtml(user) {
         if (user === undefined) {
             getCurrentUser(updateUserHtml);
         }
         $('#user-profile-container').html(getUserHtml(user));
-    };
+    }
+    ;
 
     function initModel(authResult, sendCodeToServer) {
         if (authResult === undefined) {
@@ -113,47 +119,51 @@
         } else {
             this.idToken = authResult.id_token;
             this.accessToken = authResult.access_token;
-            if (sendCodeToServer){
+            if (sendCodeToServer) {
                 // Force the client to hit an authorized endpoint on the server.
                 var uri = '/api/users/me';
                 $.ajax(uri, {
                     async: true,
                     data: '',
-                    beforeSend: function(request) {
+                    beforeSend: function (request) {
                         request.setRequestHeader('X-OAuth-Code', authResult.code + ' redirect_uri=\'postmessage\'');
                     },
-                    error: function(jqhr, status, error) {
+                    error: function (jqhr, status, error) {
                         console.log("Error on authorize" + error);
                     },
-                    success: function() {
+                    success: function () {
                         reAuth = false;
                     },
                     type: "GET"
                 });
             }
         }
-    };
+    }
+    ;
 
     function showAuthUI() {
         $('#signin-container').hide();
         $('#auth-area-container').show();
-    };
+    }
+    ;
 
 
     function hideAuthUI() {
         $('#signin-container').show();
         $('#auth-area-container').hide();
         $('#user-profile-container').html('');
-    };
+    }
+    ;
 
     function hasSessionCookie() {
         var currSessionId = this.getCurrentSessionId();
         return currSessionId !== undefined;
-    };
+    }
+    ;
 
     function getCurrentSessionId() {
         var keyValPairs = document.cookie.split(';');
-        for (var i=0; i < keyValPairs.length; i++){
+        for (var i = 0; i < keyValPairs.length; i++) {
             var key = keyValPairs[i].split('=')[0];
             if (key != undefined) key = key.trim();
 
@@ -166,16 +176,17 @@
             }
         }
         return undefined;
-    };
+    }
+    ;
 
-    function apiCall (endpoint, verb, callback, paramString, data, retryCount) {
+    function apiCall(endpoint, verb, callback, paramString, data, retryCount) {
 
         if (endpoint == undefined) endpoint = '';
         if (paramString == undefined) paramString = '';
         if (verb == undefined) verb = 'GET';
         if (data == undefined) data = '';
         if (callback == undefined) {
-            callback = function(resp) {
+            callback = function (resp) {
                 console.log(resp);
             };
         }
@@ -195,7 +206,7 @@
         $.ajax(uri,
                 {
                     async: true,
-                    beforeSend: function(request) {
+                    beforeSend: function (request) {
                         // Only send the authorization headers if the client is not connected.
                         if (hasSessionCookie() && !reAuth) {
                             // Session is authorized, no need to send a bearer token.
@@ -205,13 +216,14 @@
                         }
                     },
                     data: data,
-                    error: function(jqhr, status, error){
-                       console.log('Error : ' + error);
+                    error: function (jqhr, status, error) {
+                        console.log('Error : ' + error);
                     },
                     type: verb,
                     success: callback
                 });
-    };
+    }
+    ;
 
     function getUserHtml(user) {
         console.log(JSON.stringify(user));
@@ -219,7 +231,7 @@
                 '<span id="profileDetails">' +
                 'Welcome back <b>' +
                 user.display_name +
-                '</b><br/><br/></span>'+
+                '</b><br/><br/></span>' +
                 '<div id="' + user.google_id + '">' +
                 '    <img src="' + user.photo_url + '">' +
                 '</div><br/>' +
@@ -232,52 +244,40 @@
                 '  </a>' +
                 '</div>';
         return profile;
-    };
+    }
+    ;
 
-   function signOutUser() {
+    function signOutUser() {
         var callback = function () {
             gapi.auth.signOut();
             document.cookie = COOKIE_KEY + "; expires=Thu, 01 Jan 1970 00:00:01;";
-            // TODO haikuPlus.Helper.redirect(undefined, '/haikus')
+            idToken = undefined;
+            accessToken = undefined;
+            currUser = undefined;
+            hasAuth = false;
+            reAuth = false;
+            // TODO redirect(/home')
         };
-        this.apiCall('/api/signout', 'POST', callback, '', 1);
+        apiCall('/api/signout', 'POST', callback, '', 1);
         hideAuthUI();
-    };
+    }
+    ;
 
-    /**
-     * POSTs to the server to disconnect the user from this application.
-     */
     function disconnectUser() {
         var callback = function (resp) {
-            // haikuPlus.Helper.refresh(undefined);
+            document.cookie = COOKIE_KEY + "; expires=Thu, 01 Jan 1970 00:00:01;";
+            idToken = undefined;
+            accessToken = undefined;
+            currUser = undefined;
+            hasAuth = false;
+            reAuth = false;
+            // TODO redirect(/home')
         };
-        disconnect(callback);
+        // disconnect server sode
+        apiCall('/api/disconnect', 'POST', callback, '', '', 1);
         hideAuthUI();
-    };
-
-    function disconnect (callback) {
-        // HARDCODE to disconnect directly for now.
-        if (true) {
-            // Disconnect client side
-            var disconnectURI = 'https://accounts.google.com/o/oauth2/revoke?token=' + gapi.auth.getToken().access_token;
-            // Revoke the access token.
-            $.ajax(disconnectURI, {
-                        async: true,
-                        type: 'GET',
-                        success: function(result) {
-                            // User has diconnected successfully.
-                            //haikuPlus.Helper.refresh(undefined);
-                        },
-                        error: function(e) {
-                            console.log(e);
-                        }
-                    });
-        } else {
-            // disconnect server sode
-            apiCall('/api/disconnect', 'POST', callback, '', '', 1);
-        }
-    };
-
+    }
+    ;
 
 </script>
 

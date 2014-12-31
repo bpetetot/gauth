@@ -29,15 +29,12 @@ import java.util.logging.Logger;
 
 /**
  * Provides an API endpoint for deleting the session for the currently logged in user.
- *
  *   POST /api/signout
- *
- * @author joannasmith@google.com (Joanna Smith)
  */
 @Singleton
 public class SignOutServlet extends HttpServlet {
   /**
-   * Logger for the Authenticate class.
+   * Logger for the SignOutServlet class.
    */
   Logger logger = Logger.getLogger("SignOutServlet");
 
@@ -48,8 +45,7 @@ public class SignOutServlet extends HttpServlet {
    * @throws java.io.IOException if the response fails to fetch its writer
    */
   @Override
-  protected void doPost(HttpServletRequest request, HttpServletResponse response)
-      throws IOException {
+  protected void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException {
     String sessionId = request.getSession().getId();
     if (sessionId != null) {
       User user = Services.userDao.loadUserWithSessionId(sessionId);

@@ -16,12 +16,11 @@
 
 package fr.mhz.bookie.auth;
 
-import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
 import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpResponseException;
 import com.google.inject.Singleton;
-import fr.mhz.bookie.services.Services;
 import fr.mhz.bookie.model.User;
+import fr.mhz.bookie.services.Services;
 
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -48,8 +47,7 @@ public class DisconnectServlet extends HttpServlet {
    * For use in verifying access tokens, as the client library currently does not provide
    * a validation method for access tokens.
    */
-  private static final String TOKEN_INFO_REVOKE_ENDPOINT =
-      "https://accounts.google.com/o/oauth2/revoke?token=%s";
+  private static final String TOKEN_INFO_REVOKE_ENDPOINT = "https://accounts.google.com/o/oauth2/revoke?token=%s";
 
   /**
    * Exposed as `POST /api/disconnect`.
@@ -65,25 +63,18 @@ public class DisconnectServlet extends HttpServlet {
   protected void doPost(HttpServletRequest request, HttpServletResponse response)
       throws IOException {
     String sessionId = request.getSession().getId();
-    User sessionUser = Services.userDao.loadUserWithSessionId(sessionId);
+    User user = Services.userDao.loadUserWithSessionId(sessionId);
 
-    if (sessionUser == null) {
+    if (user == null) {
       // Somehow, the session is unauthenticated.
       response.setStatus(HttpServletResponse.SC_FORBIDDEN);
       return;
     }
 
-    Long userId = sessionUser.getUserId();
-    String googleId = sessionUser.getGoogleUserId();
-    User user = Services.userDao.loadUser(userId);
-    GoogleCredential credential = Services.createCredential(user.getAccessToken(), user.getRefreshToken());
-
-    // Revoke the tokens to invalidate them for future use
-    String accessToken = credential.getAccessToken();
-    String refreshToken = credential.getRefreshToken();
     try {
-      revokeToken(accessToken);
-      revokeToken(refreshToken);
+      if (user.getAccessToken() != null) {
+        revokeToken(user.getAccessToken());
+      }
     } catch (IOException e) {
       logger.log(Level.INFO, "Revoke token HTTP request failed; return 500", e);
       // The HTTP request was malformed or could not be completed, likely due to a network error.
@@ -92,7 +83,9 @@ public class DisconnectServlet extends HttpServlet {
     }
 
     // Delete user data within the app
-    Services.userDao.deleteUser(userId);
+    user.setAccessToken(null);
+    user.setRefreshToken(null);
+    Services.userDao.updateUser(user);
 
     logger.log(Level.INFO, "Disconnect succeeded");
     response.setStatus(HttpServletResponse.SC_OK);

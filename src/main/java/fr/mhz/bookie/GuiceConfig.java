@@ -7,11 +7,11 @@ import com.google.inject.Singleton;
 import com.google.inject.servlet.GuiceServletContextListener;
 import com.google.inject.servlet.ServletModule;
 import com.googlecode.objectify.ObjectifyFilter;
+import fr.mhz.bookie.api.HomeServlet;
 import fr.mhz.bookie.api.UserServlet;
 import fr.mhz.bookie.auth.AuthenticatedFilter;
 import fr.mhz.bookie.auth.DisconnectServlet;
 import fr.mhz.bookie.auth.SignOutServlet;
-import fr.mhz.bookie.dao.OfyService;
 
 import javax.servlet.ServletContextEvent;
 import java.util.logging.Logger;
@@ -28,10 +28,12 @@ public class GuiceConfig extends GuiceServletContextListener {
         @Override
         protected void configureServlets() {
 
+            // Filters
             filter("/*").through(ObjectifyFilter.class);
             filter("/api/*").through(AuthenticatedFilter.class);
 
-            serve("/home", "/").with(StaticServlet.class);
+            // Servlets
+            serve("/home", "/").with(HomeServlet.class);
             serve("/api/users/me").with(UserServlet.class);
             serve("/api/signout").with(SignOutServlet.class);
             serve("/api/disconnect").with(DisconnectServlet.class);

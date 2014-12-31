@@ -1,4 +1,4 @@
-package fr.mhz.bookie.dao;
+package fr.mhz.bookie;
 
 import com.google.inject.Inject;
 import com.google.inject.Injector;

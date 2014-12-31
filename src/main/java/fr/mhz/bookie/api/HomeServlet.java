@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package fr.mhz.bookie;
+package fr.mhz.bookie.api;
 
 import com.google.inject.Singleton;
 
@@ -30,7 +30,7 @@ import java.util.logging.Logger;
  * Simple servlet that sets the metadata.
  */
 @Singleton
-public class StaticServlet extends HttpServlet {
+public class HomeServlet extends HttpServlet {
 
   /**
    * Logger for the Authenticate class.
