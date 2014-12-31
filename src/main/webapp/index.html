@@ -3,6 +3,8 @@
 <head>
     <title>GAuth</title>
     <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
+    <script type="text/javascript" src="https://www.google.com/jsapi"></script>
+    <script type="text/javascript" src="https://apis.google.com/js/api.js"></script>
 </head>
 
 <body>
@@ -22,10 +24,18 @@
     <span class="profile-container" id="user-profile-container">
         <!-- insert profile HTML here -->
     </span>
+    <div>
+        <button onclick="openDrive()" >Open Drive</button>
+        <div id="result-drive-container"></div>
+    </div>
 </span>
 
 <!-- Async load plus.js and client.js -->
 <script>
+
+    google.load('picker', '1', {
+        'callback':'console.log(\'Google picker API loaded.\');'
+    });
 
     var idToken = undefined;
     var accessToken = undefined;
@@ -53,6 +63,27 @@
      */
     function onPlusOneLoaded() {
         // do stuff
+    }
+
+    function openDrive() {
+
+        var docsView = new google.picker.DocsView()
+                .setIncludeFolders(true)
+                .setMimeTypes('application/vnd.google-apps.folder')
+                .setSelectFolderEnabled(true);
+
+        var picker = new google.picker.PickerBuilder()
+                .setAppId("165531838591-ue3p80mgjk1nh0kiggg1402pamet2h85.apps.googleusercontent.com")
+                .setOAuthToken(accessToken)
+                .addView(docsView)
+                .setCallback(onFilePicked)
+                .build();
+
+        picker.setVisible(true);
+    };
+
+    function onFilePicked(data) {
+        $('#result-drive-container').html(JSON.stringify(data));
     }
 
     /**
